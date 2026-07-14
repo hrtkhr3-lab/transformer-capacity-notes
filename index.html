@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>変圧器容量計画のための統計モデリング・トピック集</title>
+<style>
+  :root{
+    --ink:#1c1f26;
+    --sub:#5b6270;
+    --line:#e4e6eb;
+    --card:#fafbfc;
+    --accent:#2E5EAA;
+    --accent2:#D9534F;
+    --accent3:#4C9A6B;
+    --formula-bg:#f4f6fb;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; padding:0;
+    background:#ffffff;
+    color:var(--ink);
+    font-family:"Noto Sans CJK JP","Hiragino Sans","Yu Gothic",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    line-height:1.85;
+    font-size:15.5px;
+  }
+  .wrap{max-width:880px; margin:0 auto; padding:48px 28px 90px;}
+  .hero{
+    padding:28px 0 22px;
+    border-bottom:3px solid var(--ink);
+    margin-bottom:8px;
+  }
+  .hero .kicker{
+    font-size:12.5px; letter-spacing:0.14em; color:var(--accent);
+    font-weight:700; text-transform:uppercase; margin-bottom:10px;
+  }
+  h1{font-size:26px; margin:0 0 10px; font-weight:800; letter-spacing:-0.01em;}
+  .hero p{color:var(--sub); font-size:14.5px; margin:0;}
+  .toc{
+    display:grid; grid-template-columns:1fr 1fr; gap:6px 22px;
+    margin:26px 0 44px; padding:18px 22px; background:var(--card);
+    border:1px solid var(--line); border-radius:10px;
+  }
+  .toc a{color:var(--ink); text-decoration:none; font-size:14px;}
+  .toc a:hover{color:var(--accent);}
+  .toc .num{color:var(--accent); font-weight:700; margin-right:6px;}
+
+  section.topic{margin:56px 0 0; padding-top:6px;}
+  .topic-head{
+    display:flex; align-items:baseline; gap:14px;
+    border-bottom:1px solid var(--line); padding-bottom:12px; margin-bottom:20px;
+  }
+  .topic-num{
+    font-size:13px; font-weight:800; color:#fff; background:var(--ink);
+    padding:3px 10px; border-radius:20px; flex-shrink:0;
+  }
+  .topic-head h2{font-size:20px; margin:0; font-weight:800;}
+  .topic-head .jp-alt{color:var(--sub); font-size:13px; font-weight:500; margin-left:2px;}
+
+  h3.sub{font-size:14.5px; font-weight:800; margin:26px 0 10px; color:var(--accent);}
+  p{margin:0 0 14px;}
+
+  .formula{
+    background:var(--formula-bg); border-left:3px solid var(--accent);
+    padding:14px 18px; margin:14px 0 18px; border-radius:0 6px 6px 0;
+    font-family:"SF Mono",Consolas,"Menlo",monospace; font-size:13.6px;
+    color:#25324a; overflow-x:auto; white-space:pre;
+  }
+  .figure{margin:22px 0 26px;}
+  .figure img{width:100%; display:block; border:1px solid var(--line); border-radius:8px;}
+  .figure .cap{font-size:12.8px; color:var(--sub); margin-top:8px; line-height:1.6;}
+
+  .callout{
+    background:#fff8ee; border:1px solid #f0dcb8; border-radius:8px;
+    padding:14px 18px; margin:16px 0; font-size:14px;
+  }
+  .callout .lbl{font-weight:800; color:#a6690f; font-size:12.5px; letter-spacing:0.04em; margin-bottom:4px;}
+
+  .implication{
+    background:#eef3fb; border:1px solid #d3e0f3; border-radius:8px;
+    padding:14px 18px; margin:16px 0; font-size:14px;
+  }
+  .implication .lbl{font-weight:800; color:var(--accent); font-size:12.5px; letter-spacing:0.04em; margin-bottom:4px;}
+
+  .refs{font-size:13px; color:var(--sub); margin-top:16px;}
+  .refs .lbl{font-weight:700; color:var(--ink); font-size:12.5px; letter-spacing:0.03em;}
+  .refs code{
+    background:#f0f1f4; padding:1px 6px; border-radius:4px; font-size:12.2px;
+  }
+
+  .integration{
+    margin-top:70px; padding:28px 26px; background:var(--ink); color:#f2f3f5;
+    border-radius:12px;
+  }
+  .integration h2{font-size:19px; margin:0 0 14px; color:#fff;}
+  .integration ol{margin:0; padding-left:20px;}
+  .integration li{margin-bottom:10px; font-size:14px; color:#dadde3;}
+  .integration li b{color:#fff;}
+
+  .foot{margin-top:38px; padding-top:18px; border-top:1px solid var(--line); font-size:12.5px; color:var(--sub);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="kicker">Smart-Meter Demand Clustering / Statistical Methods Note</div>
+    <h1>変圧器容量計画のための統計モデリング・トピック集</h1>
+    <p>PRISM・階層モデル・分位点回帰・ADMD・湿度補正・Newey-West — 6つの論点を、現行パイプラインとの接続点付きで整理する</p>
+  </div>
+
+  <div class="toc">
+    <a href="#t1"><span class="num">01</span>PRISM と変化点モデル</a>
+    <a href="#t2"><span class="num">02</span>階層モデル／部分プーリング</a>
+    <a href="#t3"><span class="num">03</span>分位点回帰</a>
+    <a href="#t4"><span class="num">04</span>ADMD と同時率</a>
+    <a href="#t5"><span class="num">05</span>冷房需要と湿度・不快指数</a>
+    <a href="#t6"><span class="num">06</span>系列相関と Newey-West 標準誤差</a>
+  </div>
+
+  <!-- ============================================================ -->
+  <section class="topic" id="t1">
+    <div class="topic-head">
+      <span class="topic-num">01</span>
+      <h2>PRISM と変化点モデル <span class="jp-alt">（Princeton Scorekeeping Method, Fels 1986）</span></h2>
+    </div>
+
+    <p>
+      PRISM は1980年代にプリンストン大学で開発された、住宅の暖冷房エネルギー消費を気象データから
+      説明するための古典的手法である。核となる発想は単純で、「電力需要と気温の関係は、ある温度
+      （バランス温度・変化点温度 <i>Tb</i>）を境に折れ線（ピースワイズ線形）になる」というものである。
+      Tbより低い日は暖房が立ち上がり気温が下がるほど消費が増え、Tbより高い日は冷房が立ち上がり
+      気温が上がるほど消費が増える。その間（不感帯）は基礎負荷（ベースロード）だけが乗る。
+    </p>
+
+    <h3 class="sub">なぜ「全軒共通の基準温度」が問題なのか</h3>
+    <p>
+      度日法（degree-day method）で18℃/24℃のような固定の基準温度を全世帯に当てはめるのは、
+      「断熱性能・設備効率・在宅行動パターンが世帯ごとに異なる」という現実を切り捨てていることに
+      等しい。断熱の良い住宅は外気温がかなり下がるまで暖房を入れず、逆に断熱が弱い住宅や在宅時間が
+      長い世帯はより高い外気温でも暖房が立ち上がる。PRISM・ASHRAE Guideline 14 の
+      <b>5-parameter change-point model</b> は、この Tb 自体を世帯ごとの回帰パラメータとして推定する
+      ことで、この異質性を明示的にモデルに取り込む。
+    </p>
+
+    <h3 class="sub">モデルの形（5パラメータ）</h3>
+    <div class="formula">E(T) = β0 + βH · max(TbH − T, 0) + βC · max(T − TbC, 0)
+
+  β0   : ベースロード（不感帯での消費水準）
+  TbH  : 暖房側バランス温度（この温度を下回ると暖房負荷が発生）
+  TbC  : 冷房側バランス温度（この温度を上回ると冷房負荷が発生）
+  βH   : 暖房感度（気温1℃低下あたりの増加量）
+  βC   : 冷房感度（気温1℃上昇あたりの増加量）
+</div>
+    <p>
+      TbH = TbC の単純な変化点モデル（3パラメータ）もあるが、暖房と冷房で建物の熱的挙動や
+      設定温度の心理的な非対称性が異なるため、実務では暖冷別のTbを推定する5パラメータ型が標準形
+      として扱われることが多い（ASHRAE Guideline 14 のキャリブレーション文脈でも同様の定式化が
+      使われる）。
+    </p>
+
+    <div class="figure">
+      <img src="figs/fig1_changepoint.png" alt="変化点モデルの図">
+      <div class="cap">図1｜同じ「18/24℃」という仮定を当てはめても、断熱の良い世帯（左）と弱い世帯（右）では
+      実際のバランス温度・感度が大きくずれ、共通仮定の直線（グレー破線）は両者の実測から外れる。
+      世帯ごとに Tb・β を推定する個別曲線（実線）の方が当てはまりが良い。</div>
+    </div>
+
+    <div class="implication">
+      <div class="lbl">現行パイプラインへの接続点</div>
+      現状のCDDベースのモデルは基準温度を固定して使っている前提だと思うので、まずは
+      Ridge回帰の説明変数を「固定CDD」から「世帯別に推定したTbによる変化点特徴量」に置き換える
+      比較実験が有効。全世帯に非線形最小二乗（あるいはグリッドサーチでTbを走査してからOLS）を
+      回し、推定されたTbの分布そのものをクラスタリングの新しい特徴量として使う、という方向性も
+      「なぜこの世帯は他と違う挙動をするのか」を説明する軸になり得る。
+    </div>
+
+    <div class="refs">
+      <span class="lbl">検索キーワード：</span>
+      <code>PRISM energy scorekeeping Fels</code>　
+      <code>change-point model degree days</code>　
+      <code>ASHRAE Guideline 14 change point regression</code>　
+      <code>5パラメータ 変化点モデル 度日法</code>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="topic" id="t2">
+    <div class="topic-head">
+      <span class="topic-num">02</span>
+      <h2>階層（マルチレベル）モデル／部分プーリング</h2>
+    </div>
+
+    <p>
+      92日分（あるいはそれ以下）の日次データだけから世帯ごとの気温感度 <i>b</i> を独立に推定すると、
+      サンプルが少ない世帯ほど推定値のばらつきが大きくなる。極端な場合、たまたま観測期間中の
+      ノイズの当たり方で「気温が上がると消費が減る」ような、物理的にありえない負の <i>b</i> が
+      出てしまう。これは世帯の実際の挙動ではなく、単に統計的推定の不確実性が大きいことの表れである
+      可能性が高い。
+    </p>
+
+    <h3 class="sub">部分プーリングという考え方</h3>
+    <p>
+      階層モデル（マルチレベルモデル）では、世帯ごとの係数 <i>b_i</i> を「独立したパラメータ」では
+      なく「全体平均のまわりに分布するランダム効果」として扱う。
+    </p>
+    <div class="formula">y_it = β0_i + b_i · x_it + ε_it
+  b_i ~ Normal( μ_b , τ² )     ← 世帯間のばらつき
+  ε_it ~ Normal( 0 , σ² )      ← 世帯内の日々のノイズ
+
+  → 各世帯の事後推定値は、
+     「その世帯だけのデータから求めた推定値」と
+     「全世帯共通の平均 μ_b」の加重平均になる。
+     観測日数が少ない・ノイズが大きい世帯ほど、
+     全体平均側に強く引き寄せられる（＝縮小推定, shrinkage）。
+</div>
+    <p>
+      この縮小の度合いは、その世帯のデータの不確実性（サンプル数・残差分散）と、
+      世帯間分散 <i>τ²</i> の比で自動的に決まる。データが十分にある世帯はほぼ縮小されず、
+      データが薄い世帯ほど強く縮小される。結果として、無情報に近い負の <i>b</i> のような
+      推定はほぼ消え、極端な外れ値による「意味のないクラスタ」の発生も抑えられる。
+    </p>
+
+    <div class="figure">
+      <img src="figs/fig2_hierarchical.png" alt="階層モデルによる部分プーリングの図">
+      <div class="cap">図2｜横軸は観測日数が少ない世帯から多い世帯の順。個別推定（赤）は観測日数が少ない
+      世帯ほど信頼区間が広く、時に符号が反転するほど不安定になる。部分プーリング推定（青）は
+      同じ世帯でも全体平均に向けて縮小され、より妥当な値に収まる。</div>
+    </div>
+
+    <div class="implication">
+      <div class="lbl">現行パイプラインへの接続点</div>
+      軒別に独立回帰でbを求めている工程を、<code>lme4</code>（R）や <code>statsmodels MixedLM</code>
+      / <code>PyMC</code>（Python）などでランダム傾き付き混合モデルに置き換えるだけで、
+      図Aで見えていた「無意味な負のb」の大半は解消される可能性が高い。クラスタリング前の
+      特徴量エンジニアリングの段階として位置づけると、既存の5〜6手法比較の枠組みとも自然に接続する。
+    </div>
+
+    <div class="refs">
+      <span class="lbl">参考書・検索キーワード：</span>
+      Gelman &amp; Hill, <i>Data Analysis Using Regression and Multilevel/Hierarchical Models</i>　
+      <code>hierarchical model household electricity temperature response</code>　
+      <code>partial pooling random slope mixed model</code>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="topic" id="t3">
+    <div class="topic-head">
+      <span class="topic-num">03</span>
+      <h2>分位点回帰（Quantile Regression）</h2>
+    </div>
+
+    <p>
+      OLS（最小二乗法）が推定するのは「気温が与えられたときの需要の条件付き<b>平均</b>」である。
+      しかし変圧器容量計画で意味を持つのは平均的な日ではなく、「最も厳しい日にどれだけの需要が
+      発生するか」という上側の極値である。日次ピークは本質的に極値統計の対象であり、
+      条件付き平均をモデル化するOLSは目的と噛み合っていない。
+    </p>
+
+    <h3 class="sub">定式化</h3>
+    <div class="formula">Q_τ(y | x) = β0(τ) + β1(τ) · x
+
+  τ : 分位点（例 τ=0.5 は中央値、τ=0.95 は上位5%点）
+
+  推定は以下の非対称絶対値損失（pinball loss）を最小化して行う：
+
+  L_τ(u) = u · (τ − 1{u<0})     where u = y − Q_τ(y|x)
+
+  → τ が大きいほど「実測が予測を上回った場合」のペナルティが
+     相対的に重くなり、回帰直線は分布の上側に寄っていく。
+</div>
+    <p>
+      OLSでは気温と需要の関係を1本の直線（平均の傾き）でしか表せないが、分位点回帰では
+      τ=0.5（中央値）、τ=0.9、τ=0.97 のように複数の分位点それぞれに対して別々の傾き・切片を
+      推定できる。多くの電力需要データでは、気温が上がるほど「分散も裾の重さも」増える
+      （不均一分散・条件付き非対称性）ため、上側分位点の傾きは平均の傾きよりも急になることが多い。
+    </p>
+
+    <div class="figure">
+      <img src="figs/fig3_quantile.png" alt="分位点回帰とOLSの比較図">
+      <div class="cap">図3｜気温が上がるほどピーク需要のばらつきと裾の重さが増す典型例。
+      OLS（灰色）は分布全体の「中心」しか捉えられないが、τ=0.97のような上側分位点線（緑）は
+      設備計画上意味のある「厳しい側の挙動」を直接推定する。</div>
+    </div>
+
+    <div class="implication">
+      <div class="lbl">現行パイプラインへの接続点</div>
+      現状Ridge回帰で気温特徴量から需要を予測している部分を、<code>statsmodels.regression.quantile_regression</code>
+      や <code>lightgbm</code> の分位点損失（objective='quantile'）に置き換え、
+      容量計画で実際に使いたい分位点（例：年間上位1〜3%に相当するτ）を直接予測対象にすると、
+      「クラスタ別の平均的な負荷特性」に加えて「クラスタ別の裾の厳しさ」を定量化でき、
+      ADMD分析（次項）とも相性が良い。
+    </div>
+
+    <div class="refs">
+      <span class="lbl">参考書・検索キーワード：</span>
+      Koenker, <i>Quantile Regression</i>　
+      <code>quantile regression peak electricity demand temperature</code>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="topic" id="t4">
+    <div class="topic-head">
+      <span class="topic-num">04</span>
+      <h2>ADMD（After Diversity Maximum Demand）と同時率</h2>
+    </div>
+
+    <p>
+      ADMDは配電用変圧器の容量計画における古典概念で、「n世帯を集約したときの合成ピーク需要を
+      世帯数で割った値」が、集約する世帯数nが増えるほどどのように収束していくかを表す。
+      各世帯のピークは同時刻に発生するとは限らない（＝多様性・diversity）ため、
+      単純に「1世帯の最大需要 × n」で変圧器を設計すると過大設計になる。ADMDはこの
+      「集約によるならし効果」を定量化したものである。
+    </p>
+
+    <h3 class="sub">関連する指標の関係</h3>
+    <div class="formula">需要率 (Demand Factor)   = 実際の最大需要 ／ 設備容量（契約容量など）
+  不等率 (Diversity Factor) = Σ(各世帯の個別最大需要) ／ 集約後の合成最大需要
+  同時率 (Coincidence Factor) = 1 ／ 不等率
+                             = 合成最大需要 ／ Σ(各世帯の個別最大需要)
+
+  ADMD(n) = 合成最大需要(n) ／ n
+            → n → ∞ で、ある漸近値（世帯平均的なベース需要+多様性後の平均ピーク）に収束
+</div>
+    <p>
+      ADMDカーブは一般に、世帯数が少ないうちは急激に低下し、ある程度の世帯数（数十〜百程度）を
+      超えるとほぼ横ばいになる形を取る。この漸近値・収束の速さは需要特性（ピークの立ち方、
+      同時性の強さ）に依存するため、<b>クラスタ類型ごとにADMDカーブが異なる</b>はずである。
+    </p>
+
+    <div class="figure">
+      <img src="figs/fig4_admd.png" alt="ADMDと同時率の図">
+      <div class="cap">図4｜左：夏型（冷房卓越）クラスタはADMDの初期値・漸近値ともに高く、
+      冷房という「みんなが同時に使う」性質上、多様性による低減が相対的に遅い。
+      右：同時率も同様にクラスタで形が異なり、変圧器の余裕率設計にそのまま接続できる。</div>
+    </div>
+
+    <div class="implication">
+      <div class="lbl">現行パイプラインへの接続点</div>
+      既存の年間・日内クラスタリング結果（夏型・冬型・フラット/低感応型、および高感応・低消費の
+      少数サブグループ）ごとに、実データからADMDカーブを実測（n世帯をランダムにブートストラップ
+      抽出して合成ピーク／nをnごとに計算）すれば、「クラスタ比率がわかれば、対象エリアの変圧器に
+      必要な容量が推定できる」という、研究のもっとも実務接続しやすい出口になる。
+      前項の分位点回帰で求めた上側分位点をベースに合成ピークを定義すると、
+      単純な実測最大値よりも安定した推定になりやすい。
+    </div>
+
+    <div class="refs">
+      <span class="lbl">検索キーワード：</span>
+      <code>after diversity maximum demand residential smart meter</code>　
+      <code>需要率 不等率 変圧器 容量計画</code>　
+      <code>coincidence factor low voltage transformer</code>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="topic" id="t5">
+    <div class="topic-head">
+      <span class="topic-num">05</span>
+      <h2>冷房需要と湿度・不快指数</h2>
+    </div>
+
+    <p>
+      夏季の空調負荷は、乾球温度（気温そのもの）だけでなく湿度の影響を強く受ける。
+      同じ気温でも湿度が高いほど体感の不快感が増して空調の稼働率・設定強度が上がり、
+      また除湿にもエネルギーを要するため、実際の電力需要は乾球温度単独よりも
+      「不快指数」や「エンタルピー」との相関が強くなることが知られている。
+    </p>
+
+    <h3 class="sub">不快指数（Discomfort Index / Temperature-Humidity Index）</h3>
+    <div class="formula">DI = 0.81 · T + 0.01 · RH · (0.99 · T − 14.3) + 46.3
+
+  T  : 気温 (℃)
+  RH : 相対湿度 (%)
+
+  ※ エンタルピーベースの指標（湿り空気線図上の全熱量）を使う流儀もあり、
+     除湿負荷（潜熱負荷）まで含めて表現したい場合はこちらがより物理的に厳密。
+</div>
+    <p>
+      Open-Meteo は気温に加えて相対湿度・日照時間なども返すため、追加の取得コストはほぼゼロで
+      不快指数やエンタルピー簡易推定を特徴量に加えられる。既存のAMeDAS特徴量（湿度・日照時間・
+      不快指数）の統合方針とも整合する。
+    </p>
+
+    <div class="figure">
+      <img src="figs/fig5_humidity.png" alt="湿度と冷房需要の関係の図">
+      <div class="cap">図5｜左：同じ乾球温度でも相対湿度（色）によって需要にばらつきが出る。
+      右：不快指数を横軸に取ると、相関係数が改善し関係がより単調・線形に近づく傾向がある
+      （数値は模擬データの例）。</div>
+    </div>
+
+    <div class="implication">
+      <div class="lbl">現行パイプラインへの接続点</div>
+      Ridge回帰の説明変数にCDDと並べて「湿度・日照時間・不快指数」を追加する方針は、
+      特に夏型クラスタの残差説明力を上げる可能性が高い。不快指数とCDDは相関が高くなりやすい
+      （多重共線性）ため、両方をそのまま投入するより「CDDは気温由来、DIとCDDの差分・
+      あるいはDIそのものに置き換え」といった特徴量設計の検討が要る。Ridgeは多重共線性に
+      ある程度頑健だが、係数の解釈性を保ちたいなら分散拡大係数（VIF）は確認しておきたい。
+    </div>
+
+    <div class="refs">
+      <span class="lbl">検索キーワード：</span>
+      <code>cooling degree days humidity enthalpy latent load</code>　
+      <code>不快指数 電力需要</code>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="topic" id="t6">
+    <div class="topic-head">
+      <span class="topic-num">06</span>
+      <h2>系列相関と Newey-West（HAC）標準誤差</h2>
+    </div>
+
+    <p>
+      日次データを対象にOLSを行う際、古典的な標準誤差の公式は「誤差項が互いに独立」という
+      前提に立っている。しかし気温や電力需要の日次データでは、ある日の残差が翌日以降の残差と
+      相関を持つ（系列相関・自己相関）ことが一般的である。暑い日が続く、寒波が居座る、
+      といった気象の持続性がそのまま需要の残差に反映されるためである。
+    </p>
+
+    <h3 class="sub">何が問題になるか</h3>
+    <p>
+      系列相関がある状態で古典的なOLS標準誤差をそのまま使うと、実際の不確実性よりも
+      小さい標準誤差を報告してしまう（多くの場合、正の自己相関では過小評価になる）ことが多い。
+      その結果、本来は有意でない係数を「統計的に有意」と誤って判断してしまうリスクがある。
+    </p>
+
+    <h3 class="sub">Newey-West（HAC: Heteroskedasticity and Autocorrelation Consistent）標準誤差</h3>
+    <div class="formula">Var_HAC(β̂) = (XᵀX)⁻¹ [ Σ_t ε̂_t² xₜxₜᵀ
+                          + Σ_{L=1}^{M} w_L Σ_{t>L} ε̂_t ε̂_{t-L} (xₜxₜ₋Lᵀ + xₜ₋Lxₜᵀ) ] (XᵀX)⁻¹
+
+  w_L = 1 − L/(M+1)     ← Bartlettカーネルによる重み（ラグが遠いほど重みを下げる）
+  M   : 最大ラグ次数（日次データなら数日〜1〜2週間程度が目安）
+
+  → 係数の点推定 β̂ 自体は変えず、標準誤差だけを
+     自己相関・不均一分散に頑健な形に補正する。
+</div>
+
+    <div class="figure">
+      <img src="figs/fig6_neweywest.png" alt="系列相関とNewey-West標準誤差の図">
+      <div class="cap">図6｜左：残差が隣接する日でまとまって同じ符号になりやすい（系列相関がある状態の例）。
+      右：ラグを考慮したNewey-West標準誤差は、ラグ0（＝素朴なOLS）よりも大きくなり、
+      本来の不確実性がより正しく反映される。</div>
+    </div>
+
+    <div class="implication">
+      <div class="lbl">現行パイプラインへの接続点</div>
+      Ridge回帰は正則化があるため係数の推定自体は比較的安定するが、「気温感度が統計的に有意か」
+      「季節・クラスタ間で係数が有意に違うか」といった検定・信頼区間の議論をする場面では、
+      素朴な標準誤差ではなくNewey-West（あるいはより一般的なクラスタ頑健標準誤差／
+      世帯×日のパネル構造ならDriscoll-Kraay標準誤差）を使うべき。Pythonなら
+      <code>statsmodels</code> の <code>cov_type='HAC'</code> オプションで比較的簡単に切り替えられる。
+    </div>
+
+    <div class="refs">
+      <span class="lbl">検索キーワード：</span>
+      <code>Newey-West standard errors time series regression</code>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <div class="integration">
+    <h2>6つの論点をまとめて見ると</h2>
+    <ol>
+      <li><b>01→02：</b> まず世帯ごとの変化点（Tb, β）をPRISM型モデルで個別推定し、
+      観測日数が少ない世帯の不安定さは階層モデルの部分プーリングで抑える。</li>
+      <li><b>03→04：</b> 需要予測を条件付き平均ではなく上側分位点で行い、
+      その分位点ベースの推定値をクラスタ別ADMDカーブの入力に使う。</li>
+      <li><b>05：</b> 気温系の説明変数（CDDや変化点特徴量）に湿度・不快指数を加えることで、
+      特に夏型クラスタの当てはまりを改善する。</li>
+      <li><b>06：</b> どのモデルで係数の有意性・信頼区間を報告する場合も、
+      日次データである以上Newey-West型の標準誤差を基本とする。</li>
+    </ol>
+  </div>
+
+  <div class="foot">
+    本ノートの図はいずれも手法の直感を示すための模擬データによる例示であり、実データの
+    分析結果ではない。各手法を実データに適用する際は、モデル選択・妥当性検証
+    （交差検証、残差診断、非線形最適化の初期値依存性など）を別途行うこと。
+  </div>
+
+</div>
+</body>
+</html>
