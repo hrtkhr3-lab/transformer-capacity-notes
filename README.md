@@ -4,7 +4,9 @@
 関連する統計モデリング手法を **6つの論点** に整理した解説ノートです。各手法について
 「考え方 → 数式 → 図解 → 現行分析パイプラインへの接続点」をまとめています。
 
-📄 **[index.html](index.html)** をブラウザで開くと全文を閲覧できます。
+👉 **[ノートを開く（GitHub Pages）](https://hrtkhr3-lab.github.io/transformer-capacity-notes/)** — クリックすると全文をブラウザで閲覧できます。
+
+（ソースを見る場合は [index.html](index.html)）
 
 ---
 
